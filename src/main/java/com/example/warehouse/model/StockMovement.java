@@ -2,14 +2,30 @@ package com.example.warehouse.model;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "stock_movements")
 public class StockMovement {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull(message = "Movement type is required") private MovementType type;
-    @Positive(message = "Amount must be greater than zero") private int amount;
+    @NotNull(message = "Movement type is required") @Enumerated(EnumType.STRING) @Column(nullable = false) private MovementType type;
+    @Positive(message = "Amount must be greater than zero") @Column(nullable = false) private int amount;
     private String reason;
-    private LocalDateTime createdAt;
+    @Column(nullable = false) private LocalDateTime createdAt;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     public enum MovementType { INCOME, OUTCOME }
     public Long getId() { return id; } public void setId(Long id) { this.id = id; }

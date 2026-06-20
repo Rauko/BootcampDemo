@@ -2,22 +2,29 @@ package com.example.warehouse.service;
 
 import com.example.warehouse.model.Product;
 import com.example.warehouse.model.StockMovement;
+import com.example.warehouse.repository.ProductRepository;
+import com.example.warehouse.repository.StockMovementRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class StockMovementService {
-    private final WarehouseStore store;
-    private final ProductService productService;
-    public StockMovementService(WarehouseStore store, ProductService productService) { this.store = store; this.productService = productService; }
-    public List<StockMovement> getAll() { return store.movements(); }
-    public List<StockMovement> getByProduct(Long productId) { return store.movements().stream().filter(movement -> movement.getProduct().getId().equals(productId)).sorted(Comparator.comparing(StockMovement::getCreatedAt).reversed()).toList(); }
-    public synchronized StockMovement register(Long productId, StockMovement movement) {
-        Product product = productService.getById(productId);
+    private final StockMovementRepository movementRepository;
+    private final ProductRepository productRepository;
+    public StockMovementService(StockMovementRepository movementRepository, ProductRepository productRepository) { this.movementRepository = movementRepository; this.productRepository = productRepository; }
+    public List<StockMovement> getAll() { return movementRepository.findAll(); }
+    public List<StockMovement> getByProduct(Long productId) { return movementRepository.findByProductIdOrderByCreatedAtDesc(productId); }
+    @Transactional
+    public StockMovement register(Long productId, StockMovement movement) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
         int newQuantity = movement.getType() == StockMovement.MovementType.INCOME ? product.getQuantity() + movement.getAmount() : product.getQuantity() - movement.getAmount();
         if (newQuantity < 0) throw new IllegalStateException("Insufficient stock. Available: " + product.getQuantity());
-        product.setQuantity(newQuantity); movement.setId(store.movementIds.incrementAndGet()); movement.setProduct(product); movement.setCreatedAt(LocalDateTime.now()); store.movements.put(movement.getId(), movement); return movement;
+        product.setQuantity(newQuantity);
+        movement.setProduct(product);
+        movement.setCreatedAt(LocalDateTime.now());
+        productRepository.save(product);
+        return movementRepository.save(movement);
     }
 }
