@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-// Converts application errors into a readable JSON response.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
