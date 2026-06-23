@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: warehouse-postgres
+    environment:
+      POSTGRES_DB: warehouse_inventory
+      POSTGRES_USER: warehouse_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting Docker Compose}
+    ports:
+      - "5432:5432"
+    volumes:
+      - warehouse-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse_app -d warehouse_inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  warehouse-postgres-data:
